@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZUR TAXI - Premium Veb Ilova</title>
+    
+    <!-- Meta SEO -->
+    <meta name="description" content="ZUR TAXI ilovasining to'liq interaktiv web-nusxasi. Yo'lovchi, haydovchi va admin panellari bilan.">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS (Map) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    
+    <!-- Chart.js (Admin Stats) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    <!-- App Wrapper -->
+    <div class="app-container">
+        
+        <!-- Header / Navigation -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="logo-icon"><i class="fa-solid fa-taxi"></i></div>
+                <div class="logo-text">
+                    <h1>ZUR <span>TAXI</span></h1>
+                    <small>PREMIUM TAXI</small>
+                </div>
+            </div>
+            
+            <!-- Global Role Switcher -->
+            <div class="role-selector">
+                <button class="role-btn active" data-role="passenger" id="btn-role-passenger">
+                    <i class="fa-solid fa-user"></i> <span data-i18n="role_passenger">Yo'lovchi</span>
+                </button>
+                <button class="role-btn" data-role="driver" id="btn-role-driver">
+                    <i class="fa-solid fa-steering-wheel"></i><i class="fa-solid fa-car-side"></i> <span data-i18n="role_driver">Haydovchilar</span>
+                </button>
+                <button class="role-btn" data-role="admin" id="btn-role-admin">
+                    <i class="fa-solid fa-chart-line"></i> <span data-i18n="role_admin">Admin</span>
+                </button>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="header-actions">
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="uz">UZ</button>
+                    <button class="lang-btn" data-lang="ru">RU</button>
+                </div>
+                <div class="connection-status online" id="connection-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text" id="status-text">Simulyator</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="app-main">
+            <!-- Left Sidebar for Panels -->
+            <aside class="sidebar-container" id="sidebar">
+                
+                <!-- PASSENGER PANEL -->
+                <section class="panel active" id="panel-passenger">
+                    <div class="panel-header">
+                        <h2 data-i18n="order_title">Taxi Buyurtma Berish</h2>
+                        <p data-i18n="order_subtitle">Manzilni tanlang va qulay tarifda sayohat qiling</p>
+                    </div>
+
+                    <div class="panel-body">
+                        <!-- Route Selection -->
+                        <div class="input-group-custom">
+                            <label><i class="fa-solid fa-location-dot location-start"></i> <span data-i18n="from_label">Qayerdan:</span></label>
+                            <div class="input-with-icon">
+                                 <input type="text" id="input-from" placeholder="Ketish manzili (Masalan: Registon maydoni)" value="Registon maydoni">
+                                <button class="locate-btn" id="btn-locate-me"><i class="fa-solid fa-crosshairs"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="input-group-custom">
+                            <label><i class="fa-solid fa-location-arrow location-end"></i> <span data-i18n="to_label">Qayerga:</span></label>
+                            <input type="text" id="input-to" placeholder="Boradigan manzil (Masalan: Siyob bozori)">
+                            <!-- Suggestions Container -->
+                            <div class="suggestions" id="to-suggestions"></div>
+                        </div>
+
+                        <div class="input-group-custom" style="margin-top: 15px;">
+                            <label><i class="fa-solid fa-phone" style="color: #4CAF50;"></i> <span data-i18n="passenger_phone">Mijoz raqami:</span></label>
+                            <input type="text" id="input-passenger-phone" placeholder="Masalan: 90 123 45 67" required>
+                        </div>
+
+                        <!-- Service Category Selection -->
+                        <div class="category-section">
+                            <h3 data-i18n="tariffs_title">Tariflar</h3>
+                            <div class="category-grid">
+                                <div class="category-card active" data-tariff="start">
+                                    <div class="tariff-badge" data-i18n="best_value">Hamyonbop</div>
+                                    <div class="tariff-icon"><i class="fa-solid fa-car"></i></div>
+                                    <div class="tariff-info">
+                                        <h4 data-i18n="tariff_start">Start</h4>
+                                        <p class="car-models">Cobalt, Nexia 3</p>
+                                        <span class="tariff-eta">2 min</span>
+                                    </div>
+                                    <div class="tariff-price" id="price-start">5 000 UZS</div>
+                                </div>
+
+                                <div class="category-card" data-tariff="comfort">
+                                    <div class="tariff-icon"><i class="fa-solid fa-car-side"></i></div>
+                                    <div class="tariff-info">
+                                        <h4 data-i18n="tariff_comfort">Comfort</h4>
+                                        <p class="car-models">Gentra, Tracker</p>
+                                        <span class="tariff-eta">3 min</span>
+                                    </div>
+                                    <div class="tariff-price" id="price-comfort">10 000 UZS</div>
+                                </div>
+
+                                <div class="category-card" data-tariff="business">
+                                    <div class="tariff-icon"><i class="fa-solid fa-crown"></i></div>
+                                    <div class="tariff-info">
+                                        <h4 data-i18n="tariff_business">Biznes</h4>
+                                        <p class="car-models">BYD Song, Malibu 2</p>
+                                        <span class="tariff-eta">5 min</span>
+                                    </div>
+                                    <div class="tariff-price" id="price-business">20 000 UZS</div>
+                                </div>
+
+                                <div class="category-card" data-tariff="delivery">
+                                    <div class="tariff-icon"><i class="fa-solid fa-box-open"></i></div>
+                                    <div class="tariff-info">
+                                        <h4 data-i18n="tariff_delivery">Yetkazish</h4>
+                                        <p class="car-models">Spark, Matiz</p>
+                                        <span class="tariff-eta">4 min</span>
+                                    </div>
+                                    <div class="tariff-price" id="price-delivery">7 000 UZS</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment & Options -->
+                        <div class="payment-section">
+                            <div class="payment-option" id="btn-payment-modal">
+                                <i class="fa-solid fa-wallet"></i>
+                                <span id="selected-payment-text" data-i18n="pay_cash">Naqd pul</span>
+                                <i class="fa-solid fa-chevron-right arrow-right"></i>
+                            </div>
+                            <div class="promo-code-input">
+                                <input type="text" id="input-promo" placeholder="Promo-kod">
+                                <button class="btn-secondary" id="btn-apply-promo" data-i18n="apply">Kiritish</button>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <button class="btn-primary main-action-btn" id="btn-order-taxi">
+                            <span data-i18n="order_btn">TAXI BUYURTMA BERISH</span>
+                        </button>
+                        
+                        <button class="btn-primary main-action-btn" id="btn-confirm-map-pin" style="display: none;">
+                            <span data-i18n="confirm_map_pin">Xaritadan Tanlashni Tasdiqlash</span>
+                        </button>
+
+                        <!-- Contact Info Section -->
+                        <div class="contact-info-section">
+                            <a href="#" class="contact-icon" title="Telegram"><i class="fa-brands fa-telegram"></i></a>
+                            <a href="#" class="contact-icon" title="Instagram"><i class="fa-brands fa-instagram"></i></a>
+                            <a href="#" class="contact-icon" title="Telefon"><i class="fa-solid fa-phone"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- Passenger Active Ride Card (Bottom Sheet style, hidden initially) -->
+                    <div class="active-ride-card" id="passenger-ride-status">
+                        <div class="drag-handle"></div>
+                        <div class="status-header">
+                            <span class="spinner-small" id="status-spinner"></span>
+                            <h3 id="passenger-status-title">Haydovchi izlanmoqda...</h3>
+                        </div>
+                        <div class="driver-details" id="passenger-driver-info">
+                            <div class="driver-avatar">
+                                <i class="fa-solid fa-user-tie"></i>
+                            </div>
+                            <div class="driver-meta">
+                                <h4 id="driver-name-display">Rustam Karimov</h4>
+                                <div class="rating-badge"><i class="fa-solid fa-star"></i> <span id="driver-rating-display">4.9</span></div>
+                            </div>
+                            <div class="car-meta">
+                                <span class="car-plate" id="car-plate-display">01 A 777 AA</span>
+                                <span class="car-name" id="car-name-display">Kulrang Chevrolet Gentra</span>
+                            </div>
+                        </div>
+                        <!-- Wait Timer Display -->
+                        <div id="passenger-wait-display" style="display: none; align-items: center; justify-content: space-between; background-color: var(--primary-light); border: 1px dashed var(--primary); padding: 10px 14px; border-radius: var(--radius-md); font-size: 13px; font-weight: 600; color: var(--primary); margin-top: 10px;">
+                            <span><i class="fa-solid fa-clock-rotate-left"></i> Kutish rejimi (Magazin/To'xtash)</span>
+                            <span id="passenger-wait-time-cost">0 min 0 sek • 0 UZS</span>
+                        </div>
+                        <div class="ride-steps-info">
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill" id="ride-progress-bar"></div>
+                            </div>
+                            <div class="eta-large" id="ride-eta-display">Yetib kelish: 2 min</div>
+                        </div>
+                        <div class="ride-action-buttons">
+                            <button class="btn-danger" id="btn-cancel-ride" data-i18n="cancel_ride">Buyurtmani Bekor Qilish</button>
+                            <button class="btn-secondary" id="btn-call-driver"><i class="fa-solid fa-phone"></i> Qong'iroq</button>
+                        </div>
+                    </div>
+
+                    <!-- Post Ride Review Panel (hidden initially) -->
+                    <div class="active-ride-card feedback-card" id="passenger-feedback-panel">
+                        <div class="feedback-header">
+                            <i class="fa-solid fa-circle-check feedback-success-icon"></i>
+                            <h3 data-i18n="trip_completed">Sayohat Yakunlandi!</h3>
+                            <p data-i18n="rate_trip_sub">Haydovchimiz sizga yoqdimi? Uni baholang.</p>
+                        </div>
+                        <div class="star-rating">
+                            <i class="fa-regular fa-star star-btn" data-rating="1"></i>
+                            <i class="fa-regular fa-star star-btn" data-rating="2"></i>
+                            <i class="fa-regular fa-star star-btn" data-rating="3"></i>
+                            <i class="fa-regular fa-star star-btn" data-rating="4"></i>
+                            <i class="fa-regular fa-star star-btn" data-rating="5"></i>
+                        </div>
+                        <textarea id="feedback-comment" placeholder="Fikr va takliflaringiz..."></textarea>
+                        <button class="btn-primary" id="btn-submit-feedback" data-i18n="submit_feedback">Yuborish</button>
+                    </div>
+                </section>
+
+                <!-- DRIVER PANEL -->
+                <section class="panel" id="panel-driver">
+                    <!-- Driver Empty Placeholder -->
+                    <div class="driver-empty-card" id="driver-empty-placeholder" style="display: none; padding: 40px 24px; text-align: center; flex-direction: column; align-items: center; justify-content: center; gap: 16px; margin: auto 0;">
+                        <div style="font-size: 54px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-id-card-clip"></i></div>
+                        <h3 style="font-size: 18px; font-weight: 700;">Faol Haydovchilar Yo'q</h3>
+                        <p style="color: var(--text-muted); font-size: 13px; max-width: 280px; line-height: 1.5;">Tizimda hozircha birorta ham haydovchi ro'yxatdan o'tmagan. Iltimos, avval Admin paneliga o'tib yangi haydovchi qo'shing.</p>
+                    </div>
+
+                    <div id="driver-panel-content" style="display: flex; flex-direction: column; width: 100%;">
+                        <div class="driver-profile-header">
+                            <div class="driver-avatar-large">
+                                <i class="fa-solid fa-steering-wheel"></i>
+                                <span class="active-badge online" id="driver-status-badge"></span>
+                            </div>
+                            <div class="driver-info-text">
+                                <h3 id="panel-driver-name">Rustam Karimov</h3>
+                                <p id="panel-driver-meta">Gentra • 01 A 777 AA • <i class="fa-solid fa-star gold"></i> 4.93</p>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                                <div class="driver-toggle-online">
+                                    <label class="switch">
+                                        <input type="checkbox" id="driver-online-toggle" checked>
+                                        <span class="slider round"></span>
+                                    </label>
+                                    <span id="driver-toggle-label" data-i18n="online">Faol</span>
+                                </div>
+                                <button class="btn-secondary-light" id="btn-driver-logout" style="padding: 4px 8px; font-size: 11px;">
+                                    <i class="fa-solid fa-right-from-bracket"></i> Chiqish
+                                </button>
+                            </div>
+                        </div>
+
+                    <div class="panel-body">
+                        <!-- Driver Stats Grid -->
+                        <div class="stats-grid-small">
+                            <div class="stat-box-small">
+                                <span class="label" data-i18n="driver_today_earnings">Bugungi Daromad</span>
+                                <h4 id="driver-today-earnings">285 000 UZS</h4>
+                            </div>
+                            <div class="stat-box-small">
+                                <span class="label" data-i18n="driver_completed_trips">Buyurtmalar</span>
+                                <h4 id="driver-completed-count">11 ta</h4>
+                            </div>
+                            <div class="stat-box-small">
+                                <span class="label">Balans</span>
+                                <h4 id="driver-current-balance">0 UZS</h4>
+                            </div>
+                            <div class="stat-box-small">
+                                <span class="label" data-i18n="driver_acceptance_rate">Qabul foizi</span>
+                                <h4>94%</h4>
+                            </div>
+                        </div>
+
+                        <!-- Driver Offline Warning -->
+                        <div class="driver-offline-card" id="driver-offline-message" style="display: none;">
+                            <i class="fa-solid fa-moon"></i>
+                            <h3 data-i18n="offline_msg_title">Siz o'chiq holatdasiz</h3>
+                            <p data-i18n="offline_msg_desc">Buyurtmalarni qabul qilish uchun "Faol" rejimga o'ting.</p>
+                        </div>
+
+                        <!-- Driver Waiting Screen -->
+                        <div class="driver-waiting-card" id="driver-waiting-message">
+                            <div class="radar-animation">
+                                <div class="radar-ring"></div>
+                                <div class="radar-ring"></div>
+                                <div class="radar-ring"></div>
+                                <i class="fa-solid fa-location-crosshairs radar-center"></i>
+                            </div>
+                            <h3 data-i18n="waiting_orders">Yangi buyurtmalar kutilmoqda...</h3>
+                            <p data-i18n="waiting_orders_sub">Buyurtma tushsa avtomatik ravishda shu yerda ko'rinadi.</p>
+                        </div>
+
+                        <!-- Incoming Ride Request Overlay -->
+                        <div class="incoming-request-card" id="driver-request-card" style="display: none;">
+                            <div class="request-timer">
+                                <svg class="timer-svg" viewBox="0 0 36 36">
+                                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path class="circle" id="timer-progress" stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="timer-text" id="request-countdown">15</div>
+                            </div>
+                            <div class="request-header">
+                                <div class="request-badge" data-i18n="new_order_badge">YANGI BUYURTMA</div>
+                                <h3 id="request-tariff-name">Start</h3>
+                            </div>
+                            <div class="request-route">
+                                <div class="route-item">
+                                    <i class="fa-solid fa-circle pickup-dot"></i>
+                                    <div>
+                                        <small data-i18n="pickup_loc">Qayerdan (Olish manzili):</small>
+                                        <p id="request-pickup-addr">Registon maydoni</p>
+                                    </div>
+                                </div>
+                                <div class="route-item" style="margin-top: 5px; margin-bottom: 5px;">
+                                    <i class="fa-solid fa-phone" style="color: #4CAF50;"></i>
+                                    <div>
+                                        <small data-i18n="passenger_phone">Mijoz raqami:</small>
+                                        <p id="request-passenger-phone">+998 -- --- -- --</p>
+                                    </div>
+                                </div>
+                                <div class="route-item">
+                                    <i class="fa-solid fa-location-dot dropoff-dot"></i>
+                                    <div>
+                                        <small data-i18n="dropoff_loc">Qayerga (Borish manzili):</small>
+                                        <p id="request-dropoff-addr">Siyob bozori</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="request-footer">
+                                <div class="request-price">
+                                    <small data-i18n="fare">Sayohat Narxi:</small>
+                                    <h2 id="request-price-display">9 000 UZS</h2>
+                                </div>
+                                <div class="request-payment">
+                                    <small data-i18n="payment">To'lov:</small>
+                                    <span id="request-payment-method"><i class="fa-solid fa-money-bill-1"></i> Naqd</span>
+                                </div>
+                            </div>
+                            <div class="request-actions">
+                                <button class="btn-danger-light" id="btn-driver-decline" data-i18n="decline">Rad etish</button>
+                                <button class="btn-success" id="btn-driver-accept" data-i18n="accept">Qabul qilish</button>
+                            </div>
+                        </div>
+
+                        <!-- Driver Active Ride Board -->
+                        <div class="driver-active-ride" id="driver-active-ride-board" style="display: none;">
+                            <div class="board-header">
+                                <div class="board-status-badge" id="driver-ride-status-badge" data-i18n="going_to_pickup">MIJOZ SARI HARAKAT</div>
+                                <h3>Mijoz: <span id="driver-passenger-name">Dilshod</span></h3>
+                            </div>
+                            
+                            <div class="navigation-info">
+                                <div class="nav-icon"><i class="fa-solid fa-diamond-turn-right"></i></div>
+                                <div class="nav-text">
+                                    <h4 id="driver-nav-instruction">O'ngga buriling va 300 metr to'g'ri yuring</h4>
+                                    <p id="driver-nav-distance">Qolgan masofa: 800m • 2 min</p>
+                                </div>
+                            </div>
+
+                            <div class="ride-details-compact">
+                                <p><strong><i class="fa-solid fa-location-dot pickup-color"></i> A:</strong> <span id="driver-pickup-display">Amir Temur xiyoboni</span></p>
+                                <p><strong><i class="fa-solid fa-location-dot dropoff-color"></i> B:</strong> <span id="driver-dropoff-display">Chorsu bozori</span></p>
+                                <p><strong><i class="fa-solid fa-phone" style="color:#4CAF50;"></i> Tel:</strong> <a href="#" id="driver-passenger-phone-link" style="color: #2EC4B6; text-decoration: none;"><span id="driver-passenger-phone">+998 -- --- -- --</span></a></p>
+                                <div class="price-payment-row">
+                                    <span><strong>Narxi:</strong> <span id="driver-price-display">9 000 UZS</span></span>
+                                    <span><strong>To'lov:</strong> <span id="driver-payment-display">Naqd</span></span>
+                                </div>
+                            </div>
+
+                            <!-- Taximeter Display Panel (Real-time) -->
+                            <div class="driver-taximeter-panel" id="driver-taximeter-panel" style="display: none;">
+                                <div class="taximeter-header">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                    <span>Taksometr</span>
+                                    <span class="taximeter-variant-label" id="driver-taximeter-variant-label">Variant 1</span>
+                                </div>
+                                <div class="taximeter-body">
+                                    <div class="taximeter-meter">
+                                        <div class="taximeter-value" id="driver-taximeter-value">0 so'm</div>
+                                        <div class="taximeter-breakdown" id="driver-taximeter-breakdown">
+                                            <span id="taximeter-km-cost">0 km • 0 so'm</span>
+                                            <span id="taximeter-wait-cost" style="display:none;"><i class="fa-solid fa-clock"></i> Kutish: 0 so'm</span>
+                                        </div>
+                                    </div>
+                                    <div class="taximeter-rates">
+                                        <div class="taximeter-rate-row" id="taximeter-rate-row"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; width: 100%; margin-top: 10px;">
+                                <button class="btn-secondary" id="btn-driver-wait" style="display: none; flex: 1; align-items: center; justify-content: center; gap: 8px; background-color: var(--primary-light); color: var(--primary); border: 1px solid rgba(255, 193, 7, 0.3);">
+                                    <i class="fa-solid fa-clock"></i> <span id="btn-driver-wait-text">Kutishni boshlash</span>
+                                </button>
+                                <button class="btn-primary main-action-btn" id="btn-driver-status-action" style="flex: 2; margin-top: 0;">
+                                    <span id="driver-action-btn-text">YO'LOVCHI KELDI / BOSHLASH</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </section>
+
+                <!-- ADMIN PANEL -->
+                <section class="panel" id="panel-admin">
+                    <div class="panel-header">
+                        <h2 data-i18n="admin_title">Boshqaruv Paneli (Admin)</h2>
+                        <p data-i18n="admin_subtitle">Real vaqtdagi statistika va monitoring</p>
+                    </div>
+
+                    <div class="panel-body">
+                        <!-- Stats Grid Large -->
+                        <div class="admin-stats-grid">
+                            <div class="admin-stat-card">
+                                <div class="card-icon blue"><i class="fa-solid fa-chart-line"></i></div>
+                                <div class="card-info">
+                                    <span data-i18n="admin_total_trips">Bugungi buyurtmalar</span>
+                                    <h3 id="admin-total-trips-count">0 ta</h3>
+                                    <small class="trend positive"><i class="fa-solid fa-arrow-up"></i> 12.4% kechagidan</small>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="card-icon gold"><i class="fa-solid fa-sack-dollar"></i></div>
+                                <div class="card-info">
+                                    <span data-i18n="admin_revenue">Umumiy Tushum</span>
+                                    <h3 id="admin-total-revenue-count">0 UZS</h3>
+                                    <small class="trend positive"><i class="fa-solid fa-arrow-up"></i> 8.1% kechagidan</small>
+                                </div>
+                            </div>
+                            <div class="admin-stat-card">
+                                <div class="card-icon green"><i class="fa-solid fa-taxi"></i></div>
+                                <div class="card-info">
+                                    <span data-i18n="admin_active_drivers">Faol Haydovchilar</span>
+                                    <h3 id="admin-active-drivers-count">4/12 ta</h3>
+                                    <small class="trend neutral">Yo'lda</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Chart Section -->
+                        <div class="admin-chart-section">
+                            <h3 data-i18n="admin_hourly_chart">Bugungi soatlik buyurtmalar</h3>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Drivers Live List -->
+                        <div class="admin-list-section">
+                            <h3 data-i18n="admin_drivers_list">Haydovchilar Holati</h3>
+                            <div class="table-container">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="driver">Haydovchi</th>
+                                            <th data-i18n="car">Mashina</th>
+                                            <th>Parol</th>
+                                            <th>Balans</th>
+                                            <th data-i18n="status">Holati</th>
+                                            <th data-i18n="admin_completed">Bajarilgan</th>
+                                            <th data-i18n="rating">Reyting</th>
+                                            <th>Amallar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-drivers-table-body">
+                                        <!-- Will be filled by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Taximeter Variant Selector (Admin Only) -->
+                        <div class="admin-taximeter-section">
+                            <h3><i class="fa-solid fa-gauge-high"></i> Taksometr Varianti</h3>
+                            <p class="taximeter-section-desc">Haydovchilar uchun narxlash tizimini tanlang. Bu sozlama barcha haydovchilar uchun amal qiladi.</p>
+                            <div class="taximeter-variants-grid" id="taximeter-variants-grid">
+                                <div class="taximeter-variant-card active" data-variant="1" id="taximeter-card-1">
+                                    <div class="taximeter-variant-header">
+                                        <div class="taximeter-variant-badge">VARIANT 1</div>
+                                        <div class="taximeter-variant-name">Standart</div>
+                                    </div>
+                                    <div class="taximeter-variant-details">
+                                        <div class="taximeter-detail-row">
+                                            <i class="fa-solid fa-car-side"></i>
+                                            <span>Mujoz olish: <strong>5 000 so'm</strong></span>
+                                        </div>
+                                        <div class="taximeter-detail-row">
+                                            <i class="fa-solid fa-gauge"></i>
+                                            <span>Har 1 km: <strong>2 000 so'm/km</strong></span>
+                                        </div>
+                                        <div class="taximeter-detail-row">
+                                            <i class="fa-solid fa-clock"></i>
+                                            <span>Kutish: <strong>600 so'm/min</strong></span>
+                                        </div>
+                                        <div class="taximeter-detail-row" style="color: #2EC4B6; font-size: 10px; margin-top: 2px;">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                            <span>Faqat Kattaqo'rg'on ichida</span>
+                                        </div>
+                                    </div>
+                                    <div class="taximeter-variant-selected-badge"><i class="fa-solid fa-circle-check"></i> Faol</div>
+                                </div>
+
+                                <div class="taximeter-variant-card" data-variant="2" id="taximeter-card-2">
+                                    <div class="taximeter-variant-header">
+                                        <div class="taximeter-variant-badge premium">VARIANT 2</div>
+                                        <div class="taximeter-variant-name">Kilometrik</div>
+                                    </div>
+                                    <div class="taximeter-variant-details">
+                                        <div class="taximeter-detail-row">
+                                            <i class="fa-solid fa-car-side"></i>
+                                            <span>Mujoz olish: <strong>8 000 so'm</strong></span>
+                                        </div>
+                                        <div class="taximeter-detail-row">
+                                            <i class="fa-solid fa-gauge"></i>
+                                            <span>Har 1 km: <strong>2 500 so'm/km</strong></span>
+                                        </div>
+                                        <div class="taximeter-detail-row">
+                                            <i class="fa-solid fa-clock"></i>
+                                            <span>Kutish: <strong>1 000 so'm/min</strong></span>
+                                        </div>
+                                        <div class="taximeter-detail-row" style="color: #2EC4B6; font-size: 10px; margin-top: 2px;">
+                                            <i class="fa-solid fa-location-dot"></i>
+                                            <span>Faqat Kattaqo'rg'on ichida</span>
+                                        </div>
+                                    </div>
+                                    <div class="taximeter-variant-selected-badge"><i class="fa-solid fa-circle-check"></i> Faol</div>
+                                </div>
+                            </div>
+                            <!-- Live indicator of currently active variant -->
+                            <div class="taximeter-active-indicator" id="taximeter-active-indicator">
+                                <i class="fa-solid fa-circle-dot" style="color: #2EC4B6;"></i>
+                                <span>Joriy variant: <strong id="taximeter-current-variant-name">Standart (Variant 1)</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- Add Driver Form Section (Admin Only) -->
+                        <div class="admin-form-section">
+                            <h3 data-i18n="admin_add_driver_title">Yangi Haydovchi Qo'shish</h3>
+                            <form id="admin-add-driver-form" class="admin-add-form">
+                                <div class="form-grid-2">
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-user"></i> <span data-i18n="driver_name_label">Ismi:</span></label>
+                                        <input type="text" id="admin-driver-name" required placeholder="Masalan: Bekzod Umarov">
+                                    </div>
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-phone"></i> <span data-i18n="driver_phone_label">Telefon raqami:</span></label>
+                                        <input type="text" id="admin-driver-phone" required placeholder="Masalan: +998 90 123 45 67">
+                                    </div>
+                                </div>
+                                <div class="form-grid-2" style="margin-top: 12px;">
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-car-side"></i> <span data-i18n="driver_car_label">Mashina modeli:</span></label>
+                                        <input type="text" id="admin-driver-car" required placeholder="Masalan: Chevrolet Gentra">
+                                    </div>
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-palette"></i> <span data-i18n="driver_color_label">Mashina rangi:</span></label>
+                                        <input type="text" id="admin-driver-color" required placeholder="Masalan: Oq" value="Oq">
+                                    </div>
+                                </div>
+                                <div class="form-grid-2" style="margin-top: 12px;">
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-id-card"></i> <span data-i18n="driver_plate_label">Davlat raqami:</span></label>
+                                        <input type="text" id="admin-driver-plate" required placeholder="Masalan: 30 A 777 AA" value="30 ">
+                                    </div>
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-key"></i> <span>Kirish Paroli:</span></label>
+                                        <input type="text" id="admin-driver-passcode" required placeholder="Masalan: 7777">
+                                    </div>
+                                    <div class="input-group-custom">
+                                        <label><i class="fa-solid fa-wallet"></i> <span>Boshlang'ich Balans (UZS):</span></label>
+                                        <input type="number" id="admin-driver-balance" required placeholder="Masalan: 10000" value="0">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary" style="margin-top: 10px;">
+                                    <i class="fa-solid fa-plus"></i> <span data-i18n="admin_btn_add">TIZIMGA QO'SHISH</span>
+                                </button>
+                            </form>
+                        <!-- Add Promo Code Form Section (Admin Only) -->
+                        <div class="admin-form-section" style="margin-top: 20px;">
+                            <h3 data-i18n="admin_add_promo_title">Yangi Promo-kod Qo'shish</h3>
+                            <form id="admin-add-promo-form" class="admin-add-form">
+                                <div class="form-grid-2">
+                                    <div class="input-group-custom">
+                                        <label for="admin-promo-code"><i class="fa-solid fa-tag"></i> Promo-kod (Masalan: ZUR10)</label>
+                                        <input type="text" id="admin-promo-code" required placeholder="Masalan: ZUR10" style="text-transform: uppercase;">
+                                    </div>
+                                    <div class="input-group-custom">
+                                        <label for="admin-promo-discount"><i class="fa-solid fa-percent"></i> Chegirma foizi (1-10%)</label>
+                                        <input type="number" id="admin-promo-discount" min="1" max="10" required placeholder="Masalan: 5">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary" style="margin-top: 10px;">
+                                    <i class="fa-solid fa-plus"></i> <span data-i18n="admin_btn_add_promo">PROMO-KOD QO'SHISH</span>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Promo Codes List -->
+                        <div class="admin-list-section" style="margin-top: 20px;">
+                            <h3 data-i18n="admin_promo_list">Faol Promo-kodlar</h3>
+                            <div class="table-responsive">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Promo-kod</th>
+                                            <th>Chegirma (%)</th>
+                                            <th>Amallar</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-promo-table-body">
+                                        <!-- promos will be rendered here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        </div>
+                        <!-- Simulator Control Section (Admin Only) -->
+                        <div class="admin-sim-section">
+                            <h3><i class="fa-solid fa-sliders"></i> <span data-i18n="sim_control">Simulyator Nazorati</span></h3>
+                            <div class="admin-sim-body">
+                                <div class="sim-param">
+                                    <label data-i18n="sim_traffic">Yo'l harakati (Trafik):</label>
+                                    <select id="sim-traffic-select">
+                                        <option value="low" data-i18n="traffic_low">Kam (Tez harakat)</option>
+                                        <option value="medium" selected data-i18n="traffic_med">O'rtacha</option>
+                                        <option value="heavy" data-i18n="traffic_heavy">Tirbandlik (Sekin)</option>
+                                    </select>
+                                </div>
+                                <div class="sim-param">
+                                    <label data-i18n="sim_speed">Harakat tezligi (Simulyatsiya):</label>
+                                    <div class="sim-speed-row">
+                                        <input type="range" id="sim-speed-slider" min="1" max="5" value="2">
+                                        <span class="range-value" id="sim-speed-value">2x</span>
+                                    </div>
+                                </div>
+                                <button class="btn-danger-light" id="btn-sim-reset" style="width: 100%; margin-top: 4px; justify-content: center;">
+                                    <i class="fa-solid fa-rotate-left"></i> <span data-i18n="sim_reset">Tizimni Qayta Yuklash</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- Map View Container -->
+            <div class="map-view-container">
+
+                <!-- Actual Leaflet Map Canvas -->
+                <!-- Actual Leaflet Map Canvas -->
+                <div id="map"></div>
+
+                <!-- Yandex-style Center Pin Selector -->
+                <div class="map-center-pin" id="map-center-pin">
+                    <div class="pin-bubble" id="pin-bubble">
+                        <span class="pin-bubble-text" id="pin-bubble-text">Ketish manzili...</span>
+                    </div>
+                    <div class="pin-marker-svg">
+                        <svg width="42" height="42" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Outer glowing ring -->
+                            <circle cx="50" cy="50" r="46" fill="rgba(12, 14, 18, 0.15)" />
+                            <!-- Outer gold shape -->
+                            <path d="M50,15 C32,15 18,29 18,47 C18,68 50,88 50,88 C50,88 82,68 82,47 C82,29 68,15 50,15 Z" fill="#0C0E12" stroke="#FFC107" stroke-width="5" />
+                            <!-- Inner pin circle -->
+                            <circle cx="50" cy="47" r="14" fill="#FFC107" />
+                            <!-- White letter A -->
+                            <text x="50" y="54" font-family="'Space Grotesk', sans-serif" font-size="18" font-weight="bold" fill="#0C0E12" text-anchor="middle">A</text>
+                        </svg>
+                    </div>
+                    <div class="pin-shadow"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Payment Method Modal -->
+        <div class="modal-backdrop" id="payment-modal">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h3 data-i18n="select_payment_title">To'lov turini tanlang</h3>
+                    <button class="modal-close-btn" id="btn-close-payment-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <div class="payment-method-item active" data-payment="cash">
+                        <i class="fa-solid fa-money-bill-wave icon-cash"></i>
+                        <div class="method-details">
+                            <h4 data-i18n="pay_cash">Naqd pul</h4>
+                            <p data-i18n="pay_cash_desc">Sayohat tugagach haydovchiga to'lanadi</p>
+                        </div>
+                        <i class="fa-solid fa-circle-check select-check"></i>
+                    </div>
+
+                    <div class="payment-method-item" data-payment="click">
+                        <span class="pay-logo-click">CLICK</span>
+                        <div class="method-details">
+                            <h4>CLICK</h4>
+                            <p data-i18n="pay_click_desc">Telefon raqam yoki karta orqali to'lov</p>
+                        </div>
+                        <i class="fa-solid fa-circle-check select-check"></i>
+                    </div>
+
+                    <div class="payment-method-item" data-payment="payme">
+                        <span class="pay-logo-payme">Payme</span>
+                        <div class="method-details">
+                            <h4>Payme</h4>
+                            <p data-i18n="pay_payme_desc">Payme ilovasi yoki chek orqali to'lov</p>
+                        </div>
+                        <i class="fa-solid fa-circle-check select-check"></i>
+                    </div>
+
+                    <div class="payment-method-item" data-payment="card">
+                        <i class="fa-solid fa-credit-card icon-card"></i>
+                        <div class="method-details">
+                            <h4 data-i18n="pay_card">Karta (Uzcard/Humo)</h4>
+                            <p data-i18n="pay_card_desc">Ilovaga biriktirilgan bank kartasi orqali</p>
+                        </div>
+                        <i class="fa-solid fa-circle-check select-check"></i>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="btn-confirm-payment" data-i18n="confirm">Tasdiqlash</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Access Password Modal -->
+        <div class="modal-backdrop" id="admin-auth-modal">
+            <div class="modal-card" style="max-width: 380px;">
+                <div class="modal-header">
+                    <h3 data-i18n="admin_auth_title">Admin Kirish</h3>
+                    <button class="modal-close-btn" id="btn-close-auth-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body" style="text-align: center; gap: 16px; padding: 24px;">
+                    <div style="font-size: 40px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-lock"></i></div>
+                    <p data-i18n="admin_auth_desc" style="font-size: 13px; color: var(--text-muted);">Ushbu panelga kirish cheklangan. Passkodni kiriting:</p>
+                    <div style="display: flex; justify-content: center; margin-top: 10px;">
+                        <input type="password" id="input-admin-passcode" maxlength="6" placeholder="••••" autocomplete="off" style="width: 120px; text-align: center; font-size: 24px; padding: 10px; background-color: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); letter-spacing: 4px; color: var(--primary);">
+                    </div>
+                    <div id="auth-error-msg" style="display: none; color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 8px;" data-i18n="auth_error">Kiritilgan parol noto'g'ri!</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="btn-submit-auth" data-i18n="confirm">Kirish</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Driver Access Password Modal -->
+        <div class="modal-backdrop" id="driver-auth-modal">
+            <div class="modal-card" style="max-width: 380px;">
+                <div class="modal-header">
+                    <h3 data-i18n="driver_auth_title">Haydovchilar Paneliga Kirish</h3>
+                    <button class="modal-close-btn" id="btn-close-driver-auth-modal"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body" style="text-align: center; gap: 16px; padding: 24px;">
+                    <div style="font-size: 40px; color: var(--primary); margin-bottom: 8px;"><i class="fa-solid fa-id-badge"></i></div>
+                    <p data-i18n="driver_auth_desc" style="font-size: 13px; color: var(--text-muted);">Sizning profilingizga ulanish uchun parolingizni kiriting:</p>
+                    <div style="display: flex; justify-content: center; margin-top: 10px;">
+                        <input type="password" id="input-driver-passcode" maxlength="6" placeholder="••••" autocomplete="off" style="width: 120px; text-align: center; font-size: 24px; padding: 10px; background-color: var(--bg-input); border: 1px solid var(--border-color); border-radius: var(--radius-md); letter-spacing: 4px; color: var(--primary);">
+                    </div>
+                    <div id="driver-auth-error-msg" style="display: none; color: var(--danger); font-size: 12px; font-weight: 600; margin-top: 8px;" data-i18n="auth_error">Kiritilgan parol noto'g'ri!</div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-primary" id="btn-submit-driver-auth" data-i18n="confirm">Kirish</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Application Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
